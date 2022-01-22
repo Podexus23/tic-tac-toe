@@ -60,6 +60,7 @@ main {
   border-radius: 20%;
   transition: box-shadow 0.5s;
   cursor: pointer;
+  user-select: none;
 
   padding: 20px;
   font-weight: 900;
