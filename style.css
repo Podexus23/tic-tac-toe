@@ -1,0 +1,74 @@
+:root {
+  --border: 1px solid rosybrown;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  height: 100vh;
+  margin: 0;
+  background: rgb(255, 225, 186);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+main {
+  max-width: 1200px;
+  width: 100%;
+  min-width: 350px;
+  margin: 0 auto;
+}
+
+.header {
+  padding-bottom: 50px;
+  border: var(--border);
+}
+
+.playground {
+  position: relative;
+  border: var(--border);
+  /* background: cornflowerblue; */
+  width: 50vw;
+  height: 50vw;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 3px 3px rgba(0, 0, 0, 0.201);
+  width: calc(100% / 3 - 10px);
+  height: calc(100% / 3 - 10px);
+  flex: 1 1 auto;
+  margin: 5px;
+  background-color: whitesmoke;
+  border: var(--border);
+  border-radius: 20%;
+  transition: box-shadow 0.5s;
+  cursor: pointer;
+
+  padding: 20px;
+  font-weight: 900;
+  font-size: 5rem;
+}
+
+.cell:hover {
+  box-shadow: 0 0 3px 3px rgba(0, 0, 0, 0.523);
+}
+.cell:active {
+  box-shadow: inset 0 0 3px 3px rgba(0, 0, 0, 0.523);
+}
