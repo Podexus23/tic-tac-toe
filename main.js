@@ -118,12 +118,18 @@ let displayController = (function () {
     _addCellsInPlayground();
   }
 
+  function findEmptyCellsCoords() {
+    let cells = playground.querySelectorAll('.cell')
+    return Array.from(cells).filter(cell => !cell.classList.contains('full')).map(cell => cell.dataset.coord)
+  }
+
   _render()
 
   return {
     changeCell,
     blockAllCells,
-    reset
+    reset,
+    findEmptyCellsCoords
   }
 })()
 
@@ -165,7 +171,12 @@ let playerController = (function () {
     secondButton.textContent = "bot";
     playerType.append(firstButton)
     playerType.append(secondButton);
+    let inputName = document.createElement('div');
+    inputName.textContent = 'Player name: ';
+    inputName.append(document.createElement('input'));
+    inputName.classList.add('player-name');
     chooseDiv.append(playerType);
+    chooseDiv.append(inputName);
     chooseDiv.append(okButton)
 
     return chooseDiv
@@ -210,9 +221,10 @@ let playerController = (function () {
 
   function turnInfoIntoPlayer() {
     const choices = document.getElementsByClassName('active');
+    const name = document.querySelector('.player-name input').value
     if (choices.length == 2 || mainKey == 'second') {
-      if (mainKey == 'first') firstPlayer = createPlayer(choices[0].textContent.toUpperCase(), choices[1].textContent);
-      if (mainKey == 'second') secondPlayer = createPlayer(firstPlayer.side == 'X' ? "O" : 'X', choices[0].textContent);
+      if (mainKey == 'first') firstPlayer = createPlayer(choices[0].textContent.toUpperCase(), choices[1].textContent, name);
+      if (mainKey == 'second') secondPlayer = createPlayer(firstPlayer.side == 'X' ? "O" : 'X', choices[0].textContent, name);
       removeChooseMenu(mainKey)
     } else console.log('you must make your choice')
   }
@@ -228,7 +240,7 @@ let playerController = (function () {
 
       let starter = document.createElement('h3')
       starter.classList.add('announcer')
-      starter.textContent = `Let's Begin Player One is ${firstPlayer.side} - Player Two is ${secondPlayer.side}`
+      starter.textContent = `${firstPlayer.name} plays as ${firstPlayer.side} VS ${secondPlayer.name} plays as ${secondPlayer.side}`
       header.append(starter)
 
       let restarter = document.createElement('button');
@@ -249,16 +261,16 @@ let playerController = (function () {
     startSide = "X"
     header.innerHTML = `<h1 class="header-title">Tic Tac Toe</h1>`;
     displayController.reset()
-    playground.removeEventListener('click', playerMove)
+    playground.removeEventListener('click', playerMode)
     _runTheGame(mainKey)
   }
 
   function showTheWinner(side) {
     let announcer = header.querySelector('.announcer')
     if (firstPlayer.side == side) {
-      announcer.textContent = `Congratulations Player One`
+      announcer.textContent = `Congratulations ${firstPlayer.name}`
     } else {
-      announcer.textContent = `Congratulations Player Two`
+      announcer.textContent = `Congratulations ${secondPlayer.name}`
     }
     if (side == 'draw') announcer.textContent = `It's a draw`;
   }
@@ -269,33 +281,94 @@ let playerController = (function () {
 
   function playTheGame() {
     const playground = document.querySelector('.playground');
-    playground.addEventListener('click', playerMove)
+    if (firstPlayer.type == 'human' && secondPlayer.type == 'human') {
+      playground.addEventListener('click', playerMode)
+    }
+    if (firstPlayer.type == 'bot' && secondPlayer.type == 'bot') {
+      playground.addEventListener('click', eveMode)
+    } else if (firstPlayer.type == 'bot' || secondPlayer.type == 'bot') {
+      if (firstPlayer.type == 'human' && firstPlayer.side == startSide) {
+        playground.addEventListener('click', pveMode)
+      } else {
+        setTimeout(easyBotMove, 1000);
+        playground.addEventListener('click', pveMode)
+      }
+    }
+
+
   }
 
-  function playerMove(event) {
+  function playerMode(event) {
     if (!event.target.classList.contains('cell')) {
       return;
     } else if (event.target.classList.contains('full')) {
       return;
     } else {
-      displayController.changeCell(startSide, event.target.dataset.coord)
-      if (GameBoard.checkWinPositions(startSide) == 'draw') {
-        showTheWinner('draw')
-      } else if (GameBoard.checkWinPositions(startSide) === true) {
-        displayController.blockAllCells();
-        showTheWinner(startSide);
-      } else {
-        startSide = sideChanger(startSide);
+      playerMove(event);
+    }
+  }
+
+  function playerMove(event) {
+    displayController.changeCell(startSide, event.target.dataset.coord)
+    if (GameBoard.checkWinPositions(startSide) == 'draw') {
+      showTheWinner('draw')
+    } else if (GameBoard.checkWinPositions(startSide) === true) {
+      displayController.blockAllCells();
+      showTheWinner(startSide);
+    } else {
+      startSide = sideChanger(startSide);
+    }
+  }
+
+  function pveMode(event) {
+    console.log(`Hi! it's PvE`)
+    if (!event.target.classList.contains('cell')) {
+      return;
+    } else if (event.target.classList.contains('full')) {
+      return;
+    } else {
+      if (firstPlayer.type == 'human' && firstPlayer.side == startSide) {
+        playerMove(event)
+        setTimeout(easyBotMove, 1000);
       }
     }
   }
 
+  function eveMode(event) {
+    console.log("hi meat bag")
+  }
+
+  function easyBotMove() {
+    let coords = displayController.findEmptyCellsCoords()
+    let botChoice = Math.floor(Math.random() * coords.length);
+    if (coords.length > 0) {
+      displayController.changeCell(startSide, coords[botChoice])
+    }
+    if (GameBoard.checkWinPositions(startSide) == 'draw') {
+      showTheWinner('draw')
+    } else if (GameBoard.checkWinPositions(startSide) === true) {
+      displayController.blockAllCells();
+      showTheWinner(startSide);
+    } else {
+      startSide = sideChanger(startSide);
+    }
+  }
   _runTheGame(mainKey)
 
-  let createPlayer = (side, type) => {
+  let createPlayer = (side, type, name = 'John') => {
+    if (name.length == 0) name = 'John'
     return {
       side,
-      type
+      type,
+      name
     }
+  }
+
+  function playerInfo() {
+    return [firstPlayer, secondPlayer]
+  }
+
+  return {
+    playerInfo
   }
 })()
